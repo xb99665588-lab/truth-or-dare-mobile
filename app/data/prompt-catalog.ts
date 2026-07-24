@@ -4,6 +4,16 @@ import type {
   Prompt,
   PromptType,
 } from "../lib/prompts";
+import {
+  friendRomanceAdvancedDare,
+  friendRomanceAdvancedTruth,
+  friendRomanceDareStyles,
+  friendRomanceEasyDare,
+  friendRomanceEasyTruth,
+  friendRomanceSpicyDare,
+  friendRomanceSpicyTruth,
+  friendRomanceTruthStyles,
+} from "./friend-romance-cores";
 
 const truthStyles = [
   "直接回答：",
@@ -364,47 +374,105 @@ type BucketConfig = {
   count: number;
   cores: readonly string[];
   styles: readonly string[];
+  defaultTopic?: Prompt["topic"];
+  romanceCount?: number;
+  romanceCores?: readonly string[];
+  romanceStyles?: readonly string[];
 };
 
-function buildBucket({
-  mode,
-  difficulty,
-  type,
-  count,
-  cores,
-  styles,
-}: BucketConfig): Prompt[] {
-  const candidates = styles.flatMap((style) =>
-    cores.map((core) => `${style}${core}`),
+function buildBucket(config: BucketConfig): Prompt[] {
+  const romanceCount = config.romanceCount ?? 0;
+  const generalCount = config.count - romanceCount;
+  const generalCandidates = config.styles.flatMap((style) =>
+    config.cores.map((core) => ({
+      text: `${style}${core}`,
+      topic: config.defaultTopic ?? ("general" as const),
+    })),
+  );
+  const romanceCandidates = (config.romanceStyles ?? []).flatMap((style) =>
+    (config.romanceCores ?? []).map((core) => ({
+      text: `${style}${core}`,
+      topic: "romance" as const,
+    })),
   );
 
-  if (candidates.length < count) {
-    throw new Error(`题库语料不足：${mode}/${difficulty}/${type}`);
+  if (
+    generalCandidates.length < generalCount ||
+    romanceCandidates.length < romanceCount
+  ) {
+    throw new Error(
+      `题库语料不足：${config.mode}/${config.difficulty}/${config.type}`,
+    );
   }
 
-  return candidates.slice(0, count).map((text, index) => ({
-    id: `${mode}-${difficulty}-${type}-${String(index + 1).padStart(3, "0")}`,
-    mode,
-    difficulty,
-    type,
+  return [
+    ...generalCandidates.slice(0, generalCount),
+    ...romanceCandidates.slice(0, romanceCount),
+  ].map(({ text, topic }, index) => ({
+    id: `${config.mode}-${config.difficulty}-${config.type}-${String(index + 1).padStart(3, "0")}`,
+    mode: config.mode,
+    difficulty: config.difficulty,
+    type: config.type,
+    topic,
     text,
   }));
 }
 
 const buckets: BucketConfig[] = [
-  { mode: "friends", difficulty: "easy", type: "truth", count: 250, cores: friendEasyTruth, styles: truthStyles },
-  { mode: "friends", difficulty: "easy", type: "dare", count: 250, cores: friendEasyDare, styles: dareStyles },
-  { mode: "friends", difficulty: "advanced", type: "truth", count: 250, cores: friendAdvancedTruth, styles: truthStyles },
-  { mode: "friends", difficulty: "advanced", type: "dare", count: 250, cores: friendAdvancedDare, styles: dareStyles },
-  { mode: "friends", difficulty: "spicy", type: "truth", count: 250, cores: friendSpicyTruth, styles: truthStyles },
-  { mode: "friends", difficulty: "spicy", type: "dare", count: 250, cores: friendSpicyDare, styles: dareStyles },
-  { mode: "couple", difficulty: "easy", type: "truth", count: 83, cores: coupleEasyTruth, styles: coupleTruthStyles },
-  { mode: "couple", difficulty: "easy", type: "dare", count: 83, cores: coupleEasyDare, styles: coupleDareStyles },
-  { mode: "couple", difficulty: "advanced", type: "truth", count: 83, cores: coupleAdvancedTruth, styles: coupleTruthStyles },
-  { mode: "couple", difficulty: "advanced", type: "dare", count: 83, cores: coupleAdvancedDare, styles: coupleDareStyles },
-  { mode: "couple", difficulty: "spicy", type: "truth", count: 84, cores: coupleSpicyTruth, styles: coupleTruthStyles },
-  { mode: "couple", difficulty: "spicy", type: "dare", count: 84, cores: coupleSpicyDare, styles: coupleDareStyles },
+  {
+    mode: "friends", difficulty: "easy", type: "truth", count: 250,
+    cores: friendEasyTruth, styles: truthStyles, romanceCount: 75,
+    romanceCores: friendRomanceEasyTruth, romanceStyles: friendRomanceTruthStyles,
+  },
+  {
+    mode: "friends", difficulty: "easy", type: "dare", count: 250,
+    cores: friendEasyDare, styles: dareStyles, romanceCount: 75,
+    romanceCores: friendRomanceEasyDare, romanceStyles: friendRomanceDareStyles,
+  },
+  {
+    mode: "friends", difficulty: "advanced", type: "truth", count: 250,
+    cores: friendAdvancedTruth, styles: truthStyles, romanceCount: 100,
+    romanceCores: friendRomanceAdvancedTruth, romanceStyles: friendRomanceTruthStyles,
+  },
+  {
+    mode: "friends", difficulty: "advanced", type: "dare", count: 250,
+    cores: friendAdvancedDare, styles: dareStyles, romanceCount: 100,
+    romanceCores: friendRomanceAdvancedDare, romanceStyles: friendRomanceDareStyles,
+  },
+  {
+    mode: "friends", difficulty: "spicy", type: "truth", count: 250,
+    cores: friendSpicyTruth, styles: truthStyles, romanceCount: 125,
+    romanceCores: friendRomanceSpicyTruth, romanceStyles: friendRomanceTruthStyles,
+  },
+  {
+    mode: "friends", difficulty: "spicy", type: "dare", count: 250,
+    cores: friendSpicyDare, styles: dareStyles, romanceCount: 125,
+    romanceCores: friendRomanceSpicyDare, romanceStyles: friendRomanceDareStyles,
+  },
+  {
+    mode: "couple", difficulty: "easy", type: "truth", count: 83,
+    cores: coupleEasyTruth, styles: coupleTruthStyles, defaultTopic: "romance",
+  },
+  {
+    mode: "couple", difficulty: "easy", type: "dare", count: 83,
+    cores: coupleEasyDare, styles: coupleDareStyles, defaultTopic: "romance",
+  },
+  {
+    mode: "couple", difficulty: "advanced", type: "truth", count: 83,
+    cores: coupleAdvancedTruth, styles: coupleTruthStyles, defaultTopic: "romance",
+  },
+  {
+    mode: "couple", difficulty: "advanced", type: "dare", count: 83,
+    cores: coupleAdvancedDare, styles: coupleDareStyles, defaultTopic: "romance",
+  },
+  {
+    mode: "couple", difficulty: "spicy", type: "truth", count: 84,
+    cores: coupleSpicyTruth, styles: coupleTruthStyles, defaultTopic: "romance",
+  },
+  {
+    mode: "couple", difficulty: "spicy", type: "dare", count: 84,
+    cores: coupleSpicyDare, styles: coupleDareStyles, defaultTopic: "romance",
+  },
 ];
 
 export const PROMPTS: Prompt[] = buckets.flatMap(buildBucket);
-

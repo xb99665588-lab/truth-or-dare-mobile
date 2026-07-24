@@ -1,4 +1,12 @@
 import { describe, expect, it } from "vitest";
+import {
+  friendRomanceAdvancedDare,
+  friendRomanceAdvancedTruth,
+  friendRomanceEasyDare,
+  friendRomanceEasyTruth,
+  friendRomanceSpicyDare,
+  friendRomanceSpicyTruth,
+} from "../data/friend-romance-cores";
 import { PROMPTS } from "../data/prompt-catalog";
 import {
   drawPrompt,
@@ -15,6 +23,17 @@ const difficulties: Difficulty[] = ["easy", "advanced", "spicy"];
 const types: PromptType[] = ["truth", "dare"];
 
 describe("prompt catalog", () => {
+  it("provides the exact number of romance cores for each bucket", () => {
+    expect([
+      friendRomanceEasyTruth.length,
+      friendRomanceEasyDare.length,
+      friendRomanceAdvancedTruth.length,
+      friendRomanceAdvancedDare.length,
+      friendRomanceSpicyTruth.length,
+      friendRomanceSpicyDare.length,
+    ]).toEqual([15, 15, 20, 20, 25, 25]);
+  });
+
   it("contains the approved 2000-prompt distribution", () => {
     expect(PROMPTS).toHaveLength(2000);
     expect(getCatalogStats(PROMPTS)).toEqual({
@@ -49,6 +68,50 @@ describe("prompt catalog", () => {
         }
       }
     }
+  });
+
+  it("contains the approved friends romance distribution", () => {
+    const romance = PROMPTS.filter(
+      (prompt) => prompt.mode === "friends" && prompt.topic === "romance",
+    );
+
+    expect(romance).toHaveLength(600);
+    expect(
+      Object.fromEntries(
+        difficulties.flatMap((difficulty) =>
+          types.map((type) => [
+            `${difficulty}-${type}`,
+            romance.filter(
+              (prompt) =>
+                prompt.difficulty === difficulty && prompt.type === type,
+            ).length,
+          ]),
+        ),
+      ),
+    ).toEqual({
+      "easy-truth": 75,
+      "easy-dare": 75,
+      "advanced-truth": 100,
+      "advanced-dare": 100,
+      "spicy-truth": 125,
+      "spicy-dare": 125,
+    });
+  });
+
+  it("keeps friends romance dares explicitly consensual", () => {
+    const romanceDares = PROMPTS.filter(
+      (prompt) =>
+        prompt.mode === "friends" &&
+        prompt.topic === "romance" &&
+        prompt.type === "dare",
+    );
+
+    expect(romanceDares).toHaveLength(300);
+    expect(
+      romanceDares.every((prompt) =>
+        /愿意|同意|拒绝|模拟|不勉强/.test(prompt.text),
+      ),
+    ).toBe(true);
   });
 
   it("avoids recently drawn prompts whenever another choice exists", () => {

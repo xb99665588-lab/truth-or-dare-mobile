@@ -1,12 +1,14 @@
 export type GameMode = "friends" | "couple";
 export type Difficulty = "easy" | "advanced" | "spicy";
 export type PromptType = "truth" | "dare";
+export type PromptTopic = "general" | "romance";
 
 export type Prompt = {
   id: string;
   mode: GameMode;
   difficulty: Difficulty;
   type: PromptType;
+  topic: PromptTopic;
   text: string;
 };
 
