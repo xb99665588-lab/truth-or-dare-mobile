@@ -1,2 +1,2 @@
-:HL["/truth-or-dare-mobile/_next/static/chunks/1686boq9f~xet.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"Qic3x58q_zvnUfODikZ-b"}
+:HL["/truth-or-dare-mobile/_next/static/chunks/18cq_ya0hfsax.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"mV7qn3GhQPFws3r7BCD2Q"}
