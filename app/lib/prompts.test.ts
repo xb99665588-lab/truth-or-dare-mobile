@@ -4,6 +4,7 @@ import {
   drawPrompt,
   filterPrompts,
   getCatalogStats,
+  rememberPrompt,
   type Difficulty,
   type GameMode,
   type PromptType,
@@ -60,6 +61,15 @@ describe("prompt catalog", () => {
     const drawn = drawPrompt(pool, recentIds, () => 0);
 
     expect(recentIds).not.toContain(drawn.id);
+  });
+
+  it("keeps the newest 50 prompt IDs for repeat avoidance", () => {
+    const previous = Array.from({ length: 50 }, (_, index) => `old-${index}`);
+
+    expect(rememberPrompt(previous, "newest")).toEqual([
+      "newest",
+      ...previous.slice(0, 49),
+    ]);
   });
 
   it("excludes unsafe or explicit instructions", () => {

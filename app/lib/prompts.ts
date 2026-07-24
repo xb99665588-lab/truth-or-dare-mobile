@@ -47,6 +47,14 @@ export function drawPrompt(
   return candidates[index];
 }
 
+export function rememberPrompt(
+  recentIds: readonly string[],
+  nextId: string,
+  limit = 50,
+): string[] {
+  return [nextId, ...recentIds.filter((id) => id !== nextId)].slice(0, limit);
+}
+
 type BucketStats = Record<Difficulty, Record<PromptType, number>>;
 
 export type CatalogStats = {
@@ -75,4 +83,3 @@ export function getCatalogStats(prompts: readonly Prompt[]): CatalogStats {
 
   return stats;
 }
-

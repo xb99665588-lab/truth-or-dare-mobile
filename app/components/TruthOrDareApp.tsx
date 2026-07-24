@@ -5,6 +5,7 @@ import { PROMPTS } from "../data/prompt-catalog";
 import {
   drawPrompt,
   filterPrompts,
+  rememberPrompt,
   type Difficulty,
   type GameMode,
   type Prompt,
@@ -56,7 +57,6 @@ export function TruthOrDareApp() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   const [recentIds, setRecentIds] = useState<string[]>([]);
-  const [completed, setCompleted] = useState(0);
   const [wheelOpen, setWheelOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [cardKey, setCardKey] = useState(0);
@@ -68,7 +68,6 @@ export function TruthOrDareApp() {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as {
           mode?: GameMode;
           difficulty?: Difficulty;
-          completed?: number;
         };
         if (saved.mode === "friends" || saved.mode === "couple") {
           setMode(saved.mode);
@@ -79,9 +78,6 @@ export function TruthOrDareApp() {
           saved.difficulty === "spicy"
         ) {
           setDifficulty(saved.difficulty);
-        }
-        if (typeof saved.completed === "number") {
-          setCompleted(saved.completed);
         }
       } catch {
         // Invalid local preferences are safely ignored.
@@ -96,9 +92,9 @@ export function TruthOrDareApp() {
     if (!hasLoadedPreferences) return;
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ mode, difficulty, completed }),
+      JSON.stringify({ mode, difficulty }),
     );
-  }, [mode, difficulty, completed, hasLoadedPreferences]);
+  }, [mode, difficulty, hasLoadedPreferences]);
 
   const activeCount = useMemo(
     () =>
@@ -128,14 +124,9 @@ export function TruthOrDareApp() {
       type: resolvedType,
     });
     const next = drawPrompt(pool, recentIds);
-    setRecentIds((previous) => [next.id, ...previous].slice(0, 20));
+    setRecentIds((previous) => rememberPrompt(previous, next.id));
     setCurrentPrompt(next);
     setCardKey((value) => value + 1);
-  }
-
-  function completePrompt() {
-    setCompleted((value) => value + 1);
-    setCurrentPrompt(null);
   }
 
   function spinWheel() {
@@ -164,10 +155,6 @@ export function TruthOrDareApp() {
               <strong>输家请抽牌</strong>
               <span>真心话大冒险</span>
             </div>
-          </div>
-          <div className="completed-pill" aria-label={`已完成 ${completed} 次`}>
-            <span aria-hidden="true">✓</span>
-            {completed}
           </div>
         </header>
 
@@ -289,53 +276,32 @@ export function TruthOrDareApp() {
             )}
           </div>
 
-          {currentPrompt ? (
-            <div className="result-actions">
-              <button
-                className="secondary-action"
-                type="button"
-                onClick={() => draw(currentPrompt.type)}
-              >
-                ↻ 换一个
-              </button>
-              <button
-                className="primary-action"
-                type="button"
-                onClick={completePrompt}
-              >
-                ✓ 完成了
-              </button>
-            </div>
-          ) : (
-            <div className="draw-actions">
-              <button
-                className="draw-button truth-button"
-                type="button"
-                onClick={() => draw("truth")}
-              >
-                <span aria-hidden="true">◉</span>
-                <strong>真心话</strong>
-                <small>敢不敢说实话</small>
-              </button>
-              <button
-                className="draw-button dare-button"
-                type="button"
-                onClick={() => draw("dare")}
-              >
-                <span aria-hidden="true">⚡</span>
-                <strong>大冒险</strong>
-                <small>敢不敢做出来</small>
-              </button>
-              <button
-                className="random-button"
-                type="button"
-                onClick={() => draw("random")}
-              >
-                <span aria-hidden="true">✦</span>
-                随机来一个
-              </button>
-            </div>
-          )}
+          <div className="draw-actions">
+            <button
+              className="draw-button truth-button"
+              type="button"
+              onClick={() => draw("truth")}
+            >
+              <span aria-hidden="true">◉</span>
+              <strong>真心话</strong>
+            </button>
+            <button
+              className="draw-button random-draw-button"
+              type="button"
+              onClick={() => draw("random")}
+            >
+              <span aria-hidden="true">✦</span>
+              <strong>随机</strong>
+            </button>
+            <button
+              className="draw-button dare-button"
+              type="button"
+              onClick={() => draw("dare")}
+            >
+              <span aria-hidden="true">⚡</span>
+              <strong>大冒险</strong>
+            </button>
+          </div>
         </section>
 
         <footer>
@@ -343,7 +309,7 @@ export function TruthOrDareApp() {
           <i />
           <span>情侣 500</span>
           <i />
-          <span>最近 20 题不重复</span>
+          <span>最近 50 题不重复</span>
         </footer>
       </div>
 
